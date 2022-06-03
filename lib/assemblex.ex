@@ -4,27 +4,40 @@ defmodule Assemblex do
   Like NASM but inside Elixir
   """
 
+  alias Assemblex.Optimizer
+
   @doc """
   Translates elixir asm to string
   """
   def translate(commands) do
     commands = List.flatten(commands)
 
-    maxlabel_length =
+    max_label_length =
       Enum.reduce(commands, 0, fn
         {label, _, _}, acc -> max(String.length("#{label}"), acc)
         _, acc -> acc
       end)
 
+    max_instruction_length =
+      Enum.reduce(commands, 0, fn
+        {_, i, _}, acc -> max(String.length("#{i}"), acc)
+        {i, _}, acc -> max(String.length("#{i}"), acc)
+      end)
+
     commands
+    |> Optimizer.pass_all()
     |> Enum.map(fn
       {name, args} ->
         argstr = Enum.join(List.wrap(args), ", ")
-        "#{name} #{argstr}"
+        label = String.pad_leading("", max_label_length + 1)
+        name = String.pad_trailing(to_string(name), max_instruction_length)
+        "#{label} #{name} #{argstr}"
         
       {label, name, args} ->
         argstr = Enum.join(List.wrap(args), ", ")
-        "#{label}: #{name} #{argstr}"
+        label = String.pad_leading(to_string(label), max_label_length)
+        name = String.pad_trailing(to_string(name), max_instruction_length)
+        "\n#{label}: #{name} #{argstr}"
     end)
     |> Enum.join("\n")
   end

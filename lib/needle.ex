@@ -57,21 +57,29 @@ defmodule Needle do
   end
 
   def gen_for_expression(ast) do
+    prefix = Process.get(:prefix, "")
+    Process.put(:prefix, prefix <> "  ")
+    IO.puts(prefix <> Macro.to_string(ast))
+
     case ast do
       {op, _, [l, r]} when op in ~w[+ * -]a ->
         l = gen_for_expression(l)
         r = gen_for_expression(r)
         [
+          asm do
+            mov rbx, rdi
+            mov rbp, rsi
+          end,
           l,
           asm do
-            push rbx
-            mov rbx, rax
+            push rax
+            mov rdi, rbx
+            mov rsi, rbp
           end,
           r,
           asm do
-            mov rdi, rbx
+            pop rdi
             mov rsi, rax
-            pop rbx
           end,
           case op do
             :"+" -> asm(call plus)
@@ -108,6 +116,10 @@ defmodule Needle do
       other ->
         asm(mov rax, unescape(other))
     end
+    |> tap(fn x ->
+      IO.puts String.replace(Assemblex.translate(x), "\n", "\n" <> prefix)
+      Process.put(:prefix, prefix)
+    end)
   end
 
   defp gen_minus() do
@@ -177,7 +189,7 @@ defmodule Needle do
         end
 
         func subsub(x, y) do
-          x * x + y * y
+          square(x) + square(y)
         end
 
         func square(x) do

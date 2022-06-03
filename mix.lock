@@ -1,0 +1,3 @@
+%{
+  "pathex": {:hex, :pathex, "2.1.0", "d59eb1f8738b67952f5ca2daeb5f60823e9eaf09839049b33b5ee8bcb3cf3fd4", [:mix], [], "hexpm", "ac9f7eae2f24559cd345ea4032b77a673619d8a2f656a1a79b145cbc41b11c46"},
+}
